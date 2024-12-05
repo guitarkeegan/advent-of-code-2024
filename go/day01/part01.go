@@ -9,6 +9,13 @@ import (
 	"strconv"
 )
 
+const (
+	LEFT_COL_START  = 0
+	LEFT_COL_END    = 5
+	RIGHT_COL_START = 8
+	RIGHT_COL_END   = 13
+)
+
 func getLeftRightValues(path string) ([]int, []int) {
 
 	file, err := os.Open(path)
@@ -23,11 +30,11 @@ func getLeftRightValues(path string) ([]int, []int) {
 
 	for scanner.Scan() {
 
-		left, err := strconv.Atoi(scanner.Text()[:5])
+		left, err := strconv.Atoi(scanner.Text()[:LEFT_COL_END])
 		if err != nil {
 			log.Fatalf("scannerScan: ParseFloat: left: %s", err)
 		}
-		right, err := strconv.Atoi(scanner.Text()[8:13])
+		right, err := strconv.Atoi(scanner.Text()[RIGHT_COL_START:RIGHT_COL_END])
 		if err != nil {
 			log.Fatalf("scannerScan: ParseFloat: right: %s", err)
 		}
@@ -84,11 +91,11 @@ func getInput(path string) ([]int, map[int]int) {
 	s := bufio.NewScanner(file)
 
 	for s.Scan() {
-		left, err := strconv.Atoi(s.Text()[:5])
+		left, err := strconv.Atoi(s.Text()[:LEFT_COL_END])
 		if err != nil {
 			log.Fatalf("sScan: ParseFloat: left: %s", err)
 		}
-		right, err := strconv.Atoi(s.Text()[8:13])
+		right, err := strconv.Atoi(s.Text()[RIGHT_COL_START:RIGHT_COL_END])
 		if err != nil {
 			log.Fatalf("scannerScan: ParseFloat: right: %s", err)
 		}
@@ -118,7 +125,8 @@ func part2() {
 
 func main() {
 
-	// part1()
+	// Part I -----------------
+	part1()
 	// Part II -----------------
 	part2()
 }
