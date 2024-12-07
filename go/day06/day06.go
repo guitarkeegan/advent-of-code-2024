@@ -37,13 +37,11 @@ const (
 
 type guard struct {
 	// ^: [-1, 0]
-	dirsMap  map[string][2]int
-	dirOrder []string
-	dirIdx   int
-	// part 1
-	// seen     map[point]bool
-	// part2
-	seen map[point]footprint
+	dirsMap   map[string][2]int
+	dirOrder  []string
+	dirIdx    int
+	seen      map[point]footprint
+	turnCount map[point]int
 }
 
 func newGaurd(p point, dir string) *guard {
@@ -60,6 +58,7 @@ func newGaurd(p point, dir string) *guard {
 			// always starts up
 			p: UP,
 		},
+		turnCount: make(map[point]int),
 	}
 	g.initDirIdx(dir)
 	return g
@@ -67,6 +66,10 @@ func newGaurd(p point, dir string) *guard {
 
 func (g *guard) turnRight() {
 	g.dirIdx = (g.dirIdx + 1) % 4
+}
+
+func (g *guard) markTurn(p point) {
+	g.seen[p] = BOTH_WAYS
 }
 
 func (g *guard) lookAhead(p point) point {
@@ -101,7 +104,7 @@ func (g *guard) storeToSeen(p point) (footprint, error) {
 		g.seen[p] = fp
 		return fp, nil
 	} else {
-		if footprint == fp && footprint != BOTH_WAYS {
+		if footprint == fp {
 			return UNKNOWN, errors.New("repeat")
 		}
 		g.updateSeen(p)
@@ -159,11 +162,21 @@ func copySlice(dst, src []string) {
 	copy(dst, src)
 }
 
+func printMatrix(matrix [][]string) {
+	for _, row := range matrix {
+		fmt.Println(strings.Join(row, ""))
+	}
+}
+
+func debugGuard(g *guard, currentPoint point) {
+	fmt.Printf("Guard Position: (%d, %d), Direction: %s\n", currentPoint.x, currentPoint.y, g.dirOrder[g.dirIdx])
+}
+
 // ------
 
 func main() {
 
-	ogMatrix := loadData("inputs/day06-test")
+	ogMatrix := loadData("inputs/day06")
 	var (
 		ROWS = len(ogMatrix)
 		COLS = len(ogMatrix[0])
@@ -234,7 +247,6 @@ func main() {
 	// var dbgCount int
 	for p, _ := range visitedPoints {
 		dbg("with point: %v, loopCount: %d", p, loopCount)
-		var bothWays int
 		if p == startPoint {
 			continue
 		}
@@ -243,61 +255,42 @@ func main() {
 
 		g := newGaurd(startPoint, startDir)
 		matrix[p.x][p.y] = "#"
-		g.updateSeen(startPoint)
 
 		currentPoint = startPoint
-		//dbg("before inner for")
 
 		for inBounds(currentPoint) {
 
-			//dbg("inBounds")
-			newPoint := g.lookAhead(currentPoint)
-			footPrint, err := g.storeToSeen(currentPoint)
-			if err != nil {
-				loopCount++
-				break
+			if p.x == 6 && p.y == 3 {
+				dbg("x: %d, y: %d", currentPoint.x, currentPoint.y)
 			}
-			matrix[currentPoint.x][currentPoint.y] = string(footPrint)
+
+			newPoint := g.lookAhead(currentPoint)
 			if !inBounds(newPoint) {
 				//dbg("!inBounds: %v", newPoint)
 				break
 			}
-			nextPos := matrix[newPoint.x][newPoint.y]
 			if isObstical(newPoint) {
-				//dbg("isObstical: %v", newPoint)
-				g.updateSeen(currentPoint)
-				matrix[currentPoint.x][currentPoint.y] =
-					string(BOTH_WAYS)
-				g.turnRight()
-				//dbg("isObstical")
-			} else {
-				if nextPos == "." {
-					currentPoint = newPoint
-
-					//dbg("curPos: %s", matrix[currentPoint.x][currentPoint.y])
-					//dbg("nextPos: %s", nextPos)
-				} else if nextPos == string(UP) && footPrint == UP ||
-					nextPos == string(LEFT) && footPrint == LEFT ||
-					nextPos == string(RIGHT) && footPrint == RIGHT ||
-					nextPos == string(DOWN) && footPrint == DOWN {
-
-					loopCount++
-					break
-				} else if nextPos == string(BOTH_WAYS) {
-					// not # or .
-					// not the same
-					//dbg("bothWays")
-					if bothWays > 5 {
-						break
-					}
-					bothWays++
-					currentPoint = newPoint
-					continue
-				} else {
-					//dbg("else")
-					currentPoint = newPoint
+				if p.x == 6 && p.y == 3 {
+					dbg("OBSTICAL")
 				}
-				bothWays = 0
+				//dbg("isObstical: %v", newPoint)
+				if val, ok := g.seen[currentPoint]; ok {
+					if val == BOTH_WAYS {
+
+						g.turnCount[currentPoint]++
+						if g.turnCount[currentPoint] > 2 {
+							if p.x == 6 && p.y == 3 {
+								dbg("EXITING: x: %d, y: %d", currentPoint.x, currentPoint.y)
+							}
+							loopCount++
+							break
+						}
+					}
+				}
+				g.turnRight()
+				g.markTurn(currentPoint)
+			} else {
+				currentPoint = newPoint
 			}
 
 		}
