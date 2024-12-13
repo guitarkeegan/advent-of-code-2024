@@ -8,7 +8,7 @@ def load(path):
 
 def main():
 
-    matrix = load("./day12/input")
+    matrix = load("./day12/test-input")
     ROWS = len(matrix)
     COLS = len(matrix[0])
     PERIMETER = 0
@@ -19,6 +19,7 @@ def main():
     regions = {}
 
     def dfs(r, c, seen, regions, target):
+        # part 1
         if (r < 0 or c < 0 or r >= ROWS or
                 c >= COLS or not matrix[r][c].startswith(target[0])):
             regions[target][PERIMETER] += 1
@@ -37,6 +38,10 @@ def main():
 
         return
 
+    # part1: when the regions of the same letter AREA
+    # are seperated, they need to be counted seperately
+    # so I put a random number to the right of the letter
+    # and use str.startswith() in the dfs
     variation = 1
     for i in range(len(matrix)):
         for j in range(len(matrix[0])):
@@ -55,8 +60,8 @@ def main():
     for measurements in regions.values():
         total += measurements[AREA] * measurements[PERIMETER]
 
-    # pprint(matrix)
-    # print(regions)
+    pprint(matrix)
+    print(regions)
     print(f"total: {total}")
 
 
